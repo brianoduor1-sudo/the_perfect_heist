@@ -1,5 +1,5 @@
 """
-Building , represents the game map as a grid of Tiles.
+Building — represents the game map as a grid of Tiles.
 
 Epic 3: Building, Map & Persistence
 Author: Patricia Ndungu
@@ -59,6 +59,10 @@ class Building:
     def is_walkable(self, position: Position) -> bool:
         """Checks if a position can be walked on."""
         return self.in_bounds(position) and self.tile_at(position).is_walkable
+
+    def is_wall(self, position: Position) -> bool:
+        """Checks if a position is a wall (used for Guard line-of-sight)."""
+        return self.in_bounds(position) and self.tile_at(position).is_wall
 
     def find_label(self, tile_type: TileType) -> List[Position]:
         """Finds all positions containing a tile type."""
