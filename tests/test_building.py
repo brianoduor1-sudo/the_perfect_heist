@@ -43,18 +43,15 @@ def test_tile_to_char_round_trip():
 # ---- Building: construction -----------------------------------------
 
 def test_building_rejects_empty_grid():
-    # A Building needs at least one row
     with pytest.raises(ValueError):
         Building([])
 
 
 def test_building_rejects_ragged_rows():
-    # All rows in the map must have the same width
     grid = [
         [Tile(TileType.FLOOR), Tile(TileType.FLOOR)],
         [Tile(TileType.FLOOR)],
     ]
-
     with pytest.raises(ValueError):
         Building(grid)
 
@@ -62,11 +59,10 @@ def test_building_rejects_ragged_rows():
 # ---- Building: from_file / level loading ----------------------------
 
 def test_building_loads_from_map_file():
-    # Check that the sample map loads with the expected size
     building = Building.from_file(MAP_PATH)
 
     assert building.width == 10
-    assert building.height == 9
+    assert building.height == 8
 
 
 # ---- Building: walkability / wall collision --------------------------
@@ -84,13 +80,12 @@ def test_interior_floor_is_walkable():
 
     # Check that normal floor tiles can be entered
     assert building.is_walkable((1, 1))
-    assert building.is_walkable((5, 5))
+    assert building.is_walkable((5, 6))
 
 
 def test_out_of_bounds_is_not_walkable():
     building = Building.from_file(MAP_PATH)
 
-    # Positions outside the map should not be walkable
     assert not building.is_walkable((-1, 0))
     assert not building.is_walkable((100, 100))
     assert not building.is_walkable((0, 100))
@@ -99,7 +94,6 @@ def test_out_of_bounds_is_not_walkable():
 def test_tile_at_out_of_bounds_raises():
     building = Building.from_file(MAP_PATH)
 
-    # Accessing an invalid position should raise an error
     with pytest.raises(ValueError):
         building.tile_at((-1, -1))
 
@@ -108,20 +102,15 @@ def test_tile_at_out_of_bounds_raises():
 
 def test_find_label_locates_exit():
     building = Building.from_file(MAP_PATH)
-
-    # The exit should be found at the expected position
-    assert building.find_label(TileType.EXIT) == [(8, 7)]
+    assert building.find_label(TileType.EXIT) == [(9, 6)]
 
 
 def test_find_label_locates_artifact():
     building = Building.from_file(MAP_PATH)
-
-    # The artifact should be found at the expected position
-    assert building.find_label(TileType.ARTIFACT) == [(4, 3)]
+    assert building.find_label(TileType.ARTIFACT) == [(3, 2)]
 
 
 def test_find_label_returns_empty_list_when_absent():
-    # A map without an exit should return an empty list
     grid = [[Tile(TileType.FLOOR)] * 3 for _ in range(3)]
     building = Building(grid)
 

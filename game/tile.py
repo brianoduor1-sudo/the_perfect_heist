@@ -17,7 +17,6 @@ class TileType(Enum):
     ARTIFACT = "artifact"
 
 
-# Map symbols
 CHAR_TO_TYPE = {
     "#": TileType.WALL,
     ".": TileType.FLOOR,
@@ -34,38 +33,31 @@ class Tile:
 
     @property
     def is_walkable(self) -> bool:
-        # Walls cannot be walked on
         return self.tile_type != TileType.WALL
+
+    @property
+    def is_wall(self) -> bool:
+        return self.tile_type == TileType.WALL
 
     @classmethod
     def from_char(cls, char: str) -> "Tile":
         """Creates a Tile from a map character."""
-
-        # Rejects unknown characters
         if char not in CHAR_TO_TYPE:
             raise ValueError(f"Unknown map character: {char!r}")
-
         return cls(CHAR_TO_TYPE[char])
 
     def to_char(self) -> str:
         """Converts this Tile back to its map character."""
-
-        # Find matching character
         for char, tile_type in CHAR_TO_TYPE.items():
             if tile_type == self.tile_type:
                 return char
-
-        # Catches invalid tile types
         raise ValueError(f"No character mapping for {self.tile_type}")
 
     def __eq__(self, other):
-        # Compares tile types
         return isinstance(other, Tile) and self.tile_type == other.tile_type
 
     def __hash__(self):
-        # Allows use in sets and dictionaries
         return hash(self.tile_type)
 
     def __repr__(self):
-        # Makes Tiles readable in tests
         return f"Tile({self.tile_type.value})"
