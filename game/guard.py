@@ -1,10 +1,4 @@
-"""
-game/guard.py — Epic 2: Guard patrol + detection (owner: Brian)
 
-Concepts used: Enum, encapsulation (_underscore attrs), @property,
-@staticmethod, @classmethod, Protocol (duck typing), tuples for
-positions.
-"""
 
 from __future__ import annotations
 from enum import Enum
@@ -107,10 +101,7 @@ class Guard:
         return [(round(x0 + (x1 - x0) * i / steps), round(y0 + (y1 - y0) * i / steps))
                 for i in range(1, steps)]
 
-    # -- Story 3 note: GameState (Epic 5) calls detects_player() each turn
-    # and sets status="lost" — Guard itself never touches GameState. --
-
-    # -- persistence, matches Epic 3's save schema --
+   
     def to_dict(self) -> dict:
         return {"position": list(self._position), "patrol_index": self._patrol_index,
                 "vision_range": self._vision_range, "facing": self._facing.name}
