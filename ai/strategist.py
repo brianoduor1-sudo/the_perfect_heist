@@ -63,7 +63,7 @@ class Strategist:
 
         return {"mode": game_state.mode, "data": None}
 
-    def _manual_fallback_mode(self) -> Dict[str, Any]:
+    def _manual_fallback_mode(self, _game_state: Any, _player_goal: str) -> Dict[str, Any]:
         return {
             "mode":"manual",
             "data": {
