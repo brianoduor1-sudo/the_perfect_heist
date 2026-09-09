@@ -1,5 +1,5 @@
 """
-Building — represents the game map as a grid of Tiles.
+Building : represents the game map as a grid of Tiles.
 
 Epic 3: Building, Map & Persistence
 Author: Patricia Ndungu
