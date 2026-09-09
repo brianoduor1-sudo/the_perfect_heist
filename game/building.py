@@ -1,10 +1,3 @@
-"""
-Building : represents the game map as a grid of Tiles.
-
-Epic 3: Building, Map & Persistence
-Author: Patricia Ndungu
-"""
-
 from typing import List, Tuple
 from .tile import Tile, TileType
 
@@ -12,7 +5,6 @@ Position = Tuple[int, int]
 
 
 class Building:
-    """Represents the game map as a grid of Tiles."""
 
     def __init__(self, grid: List[List[Tile]]):
         if not grid or not grid[0]:
@@ -29,7 +21,6 @@ class Building:
 
     @classmethod
     def from_file(cls, path: str) -> "Building":
-        """Loads a map from a text file."""
         with open(path, "r", encoding="utf-8") as file:
             lines = [line.rstrip("\n") for line in file]
 
@@ -40,32 +31,29 @@ class Building:
 
     @classmethod
     def from_lines(cls, lines: List[str]) -> "Building":
-        """Creates a Building from map lines."""
         grid = [[Tile.from_char(char) for char in line] for line in lines]
         return cls(grid)
 
     def in_bounds(self, position: Position) -> bool:
-        """Checks if a position is inside the map."""
         x, y = position
         return 0 <= x < self.width and 0 <= y < self.height
 
     def tile_at(self, position: Position) -> Tile:
-        """Gets the Tile at a position."""
         if not self.in_bounds(position):
             raise ValueError(f"Position {position} is out of bounds")
         x, y = position
         return self.grid[y][x]
 
+    def get_tile(self, position: Position) -> Tile:
+        return self.tile_at(position)
+
     def is_walkable(self, position: Position) -> bool:
-        """Checks if a position can be walked on."""
         return self.in_bounds(position) and self.tile_at(position).is_walkable
 
     def is_wall(self, position: Position) -> bool:
-        """Checks if a position is a wall (used for Guard line-of-sight)."""
         return self.in_bounds(position) and self.tile_at(position).is_wall
 
     def find_label(self, tile_type: TileType) -> List[Position]:
-        """Finds all positions containing a tile type."""
         return [
             (x, y)
             for y, row in enumerate(self.grid)

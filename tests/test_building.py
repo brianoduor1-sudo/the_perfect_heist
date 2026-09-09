@@ -11,8 +11,6 @@ MAP_PATH = os.path.join(
 )
 
 
-# ---- Tile -------------------------------------------------------------
-
 def test_tile_from_char_walkable_types():
     assert Tile.from_char(".").is_walkable
     assert Tile.from_char("E").is_walkable
@@ -35,8 +33,6 @@ def test_tile_to_char_round_trip():
         assert Tile.from_char(ch).to_char() == ch
 
 
-# ---- Building: construction -----------------------------------------
-
 def test_building_rejects_empty_grid():
     with pytest.raises(ValueError):
         Building([])
@@ -51,15 +47,11 @@ def test_building_rejects_ragged_rows():
         Building(grid)
 
 
-# ---- Building: from_file / level loading ----------------------------
-
 def test_building_loads_from_map_file():
     building = Building.from_file(MAP_PATH)
     assert building.width == 10
     assert building.height == 8
 
-
-# ---- Building: walkability / wall collision --------------------------
 
 def test_border_is_not_walkable():
     building = Building.from_file(MAP_PATH)
@@ -86,15 +78,11 @@ def test_tile_at_out_of_bounds_raises():
         building.tile_at((-1, -1))
 
 
-# ---- Building: is_wall (used by Guard line-of-sight) ------------------
-
 def test_is_wall():
     building = Building.from_file(MAP_PATH)
-    assert building.is_wall((0, 0)) is True     # border wall
-    assert building.is_wall((1, 1)) is False    # floor
+    assert building.is_wall((0, 0)) is True
+    assert building.is_wall((1, 1)) is False
 
-
-# ---- Building: find_label --------------------------------------------
 
 def test_find_label_locates_exit():
     building = Building.from_file(MAP_PATH)
