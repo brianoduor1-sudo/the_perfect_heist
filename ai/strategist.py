@@ -19,6 +19,12 @@ class Strategist:
         """Task 2 : Design game_state_to_prompt_serializer."""
         if hasattr(game_state, "to_dict"):
             return json.dumps(game_state.to_dict(), indent=2)
+        elif hasattr(game_state,"player") and hasattr(game_state,"guards"):
+            return json.dumps({
+                "player_pos": list(game_state.player.position),
+                "guard_positions": (list(g.position) for g in game_state.guards),
+                "goal": game_state.goal.description
+            }, indent=2)
         return json.dumps(game_state, indent=2)
 
     def take_turn(self, game_state: Any, player_goal: str) -> Dict[str, Any]:
@@ -57,7 +63,7 @@ class Strategist:
 
         return {"mode": game_state.mode, "data": None}
 
-    def _manual_fallback_mode(self) -> Dict[str, Any]:
+    def _manual_fallback_mode(self, _game_state: Any, _player_goal: str) -> Dict[str, Any]:
         return {
             "mode":"manual",
             "data": {
