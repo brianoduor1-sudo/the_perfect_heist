@@ -1,28 +1,4 @@
-"""
-GameState (Epic 5 - Peter).
-
-Orchestrates a single turn of the game:
-  1. Try to move the player (via MoveValidator).
-  2. Let each guard take its turn.
-  3. Check whether any guard has caught the player.
-  4. Check whether the goal has been completed.
-  5. Advance the turn counter and update game-over status.
-
-GameState relies on exactly this interface from the other classes --
-worth writing this up in interfaces.md for the team:
-  - building : in_bounds(cell), get_tile(cell)                [Building]
-  - player   : .position, .move_to(cell)                      [Player]
-  - guards   : list of objects with .position, .take_turn(game_state) [Guard]
-  - goal     : .is_complete(game_state) -> bool                [Goal / subclasses]
-
-GameState doesn't implement guard AI or goal rules itself -- it only
-calls out to them. That's what keeps it stable while Guard/Goal/Player
-are built independently by teammates.
-"""
-
-from game.move_validator import MoveValidator
-
-DIRECTIONS = {"n": (-1, 0), "s": (1, 0), "e": (0, 1), "w": (0, -1)}
+from game.move_validator import MoveValidator, DIRECTIONS
 
 
 class GameState:
@@ -46,9 +22,9 @@ class GameState:
         if self.game_over or direction not in DIRECTIONS:
             return False
 
-        d_row, d_col = DIRECTIONS[direction]
+        d_x, d_y = DIRECTIONS[direction]
         current = self.player.position
-        target = (current[0] + d_row, current[1] + d_col)
+        target = (current[0] + d_x, current[1] + d_y)
 
         if not self.move_validator.is_valid_move(current, target):
             return False
