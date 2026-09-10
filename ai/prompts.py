@@ -10,5 +10,5 @@ Player's Current Goal:
 
 Determine the next strategic move.
 ONLY respond with "n", "s", "e", or "w" inside the "move" field.
-Provide the output in the strict JSON format specified.
+Provide the output in the strict JSON format specifid.
 """
