@@ -44,9 +44,9 @@ class Guard:
 
     @property
     def patrol_path(self) -> List[Tuple[int, int]]:
-        return list(self._patrol_path)  # copy so callers can't mutate the real route
+        return list(self._patrol_path)  
 
-    # -- Story 1: patrol --
+  
     def patrol_step(self) -> Tuple[int, int]:
         """Move 1 tile toward the next waypoint; loop back at the end."""
         target = self._patrol_path[self._patrol_index]
@@ -72,7 +72,7 @@ class Guard:
         else:
             self._facing = Direction.SOUTH if dy >= 0 else Direction.NORTH
 
-    # -- Story 2: detection --
+   
     def detects_player(self, player_position: Tuple[int, int],
                         building: Optional[SupportsWallCheck] = None) -> bool:
         """Radius-based detection; optional wall check if building is given."""
