@@ -1,6 +1,6 @@
 import json
 
-from goal import StealItemGoal, ReachExitGoal, AvoidDetectionGoal, CompositeGoal
+from game.goal import StealItemGoal, ReachExitGoal, AvoidDetectionGoal, CompositeGoal
 
 
 class ParsedAction:
