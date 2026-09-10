@@ -1,124 +1,125 @@
-"""
-Test suite for move_validator.py
-
-Run with:
-    python -m unittest test.py -v
-or simply:
-    python test.py
-"""
-
 import unittest
 
-from move_validator import Tile, Building, MoveValidator
+from game.building import Building
+from game.move_validator import MoveValidator
 
 
-class TestTile(unittest.TestCase):
-    def test_new_tile_has_no_walls(self):
-        tile = Tile()
-        for direction in ("n", "s", "e", "w"):
-            self.assertFalse(tile.has_wall(direction))
-
-    def test_add_wall_sets_only_that_side(self):
-        tile = Tile()
-        tile.add_wall("n")
-        self.assertTrue(tile.has_wall("n"))
-        self.assertFalse(tile.has_wall("s"))
-        self.assertFalse(tile.has_wall("e"))
-        self.assertFalse(tile.has_wall("w"))
+def make_building(lines):
+    """Small helper: build a Building straight from a list of map rows."""
+    return Building.from_lines(lines)
 
 
-class TestBuilding(unittest.TestCase):
+class TestMoveValidatorAdjacency(unittest.TestCase):
     def setUp(self):
-        self.building = Building(width=3, height=3)
-
-    def test_in_bounds(self):
-        self.assertTrue(self.building.in_bounds((0, 0)))
-        self.assertTrue(self.building.in_bounds((2, 2)))
-        self.assertFalse(self.building.in_bounds((-1, 0)))
-        self.assertFalse(self.building.in_bounds((0, 3)))
-        self.assertFalse(self.building.in_bounds((3, 0)))
-
-    def test_add_wall_between_marks_both_sides(self):
-        self.building.add_wall_between((0, 0), (0, 1))
-        self.assertTrue(self.building.get_tile((0, 0)).has_wall("e"))
-        self.assertTrue(self.building.get_tile((0, 1)).has_wall("w"))
-        # Unrelated sides remain open.
-        self.assertFalse(self.building.get_tile((0, 0)).has_wall("s"))
-
-    def test_add_wall_between_vertical_neighbors(self):
-        self.building.add_wall_between((1, 1), (2, 1))
-        self.assertTrue(self.building.get_tile((1, 1)).has_wall("s"))
-        self.assertTrue(self.building.get_tile((2, 1)).has_wall("n"))
-
-    def test_add_wall_between_non_adjacent_raises(self):
-        with self.assertRaises(ValueError):
-            self.building.add_wall_between((0, 0), (2, 2))
-
-    def test_add_wall_between_same_cell_raises(self):
-        with self.assertRaises(ValueError):
-            self.building.add_wall_between((0, 0), (0, 0))
-
-
-class TestMoveValidator(unittest.TestCase):
-    def setUp(self):
-        self.building = Building(width=3, height=3)
+        # 5x5 open room, no interior walls -- isolates adjacency logic
+        # from walkability logic.
+        lines = [
+            "#####",
+            "#...#",
+            "#...#",
+            "#...#",
+            "#####",
+        ]
+        self.building = make_building(lines)
         self.validator = MoveValidator(self.building)
 
-    # -- is_adjacent -------------------------------------------------
-    def test_adjacent_orthogonal_step_is_true(self):
-        self.assertTrue(self.validator.is_adjacent((1, 1), (1, 2)))
-        self.assertTrue(self.validator.is_adjacent((1, 1), (0, 1)))
+    def test_orthogonal_step_is_adjacent(self):
+        self.assertTrue(self.validator.is_adjacent((1, 1), (2, 1)))  # east
+        self.assertTrue(self.validator.is_adjacent((1, 1), (1, 2)))  # south
 
     def test_diagonal_step_is_not_adjacent(self):
-        self.assertFalse(self.validator.is_adjacent((1, 1), (0, 0)))
+        self.assertFalse(self.validator.is_adjacent((1, 1), (2, 2)))
 
-    def test_same_cell_is_not_adjacent(self):
+    def test_same_position_is_not_adjacent(self):
         self.assertFalse(self.validator.is_adjacent((1, 1), (1, 1)))
 
-    def test_target_out_of_bounds_is_not_adjacent(self):
+    def test_out_of_bounds_target_is_not_adjacent(self):
         self.assertFalse(self.validator.is_adjacent((0, 0), (-1, 0)))
-        self.assertFalse(self.validator.is_adjacent((2, 2), (2, 3)))
+        self.assertFalse(self.validator.is_adjacent((4, 4), (5, 4)))
 
-    # -- get_direction -------------------------------------------------
     def test_get_direction_each_way(self):
-        self.assertEqual(self.validator.get_direction((1, 1), (0, 1)), "n")
-        self.assertEqual(self.validator.get_direction((1, 1), (2, 1)), "s")
-        self.assertEqual(self.validator.get_direction((1, 1), (1, 2)), "e")
-        self.assertEqual(self.validator.get_direction((1, 1), (1, 0)), "w")
+        self.assertEqual(self.validator.get_direction((2, 2), (2, 1)), "n")
+        self.assertEqual(self.validator.get_direction((2, 2), (2, 3)), "s")
+        self.assertEqual(self.validator.get_direction((2, 2), (3, 2)), "e")
+        self.assertEqual(self.validator.get_direction((2, 2), (1, 2)), "w")
 
     def test_get_direction_non_adjacent_returns_none(self):
-        self.assertIsNone(self.validator.get_direction((1, 1), (2, 2)))
+        self.assertIsNone(self.validator.get_direction((1, 1), (3, 3)))
 
-    # -- is_valid_move -------------------------------------------------
-    def test_valid_move_no_wall(self):
-        self.assertTrue(self.validator.is_valid_move((0, 0), (0, 1)))
 
-    def test_invalid_move_out_of_bounds(self):
-        self.assertFalse(self.validator.is_valid_move((0, 0), (-1, 0)))
+class TestMoveValidatorWalkability(unittest.TestCase):
+    def setUp(self):
+        # Interior wall at (2,1) and (2,2); exit at (3,3); artifact at (1,3).
+        lines = [
+            "#####",
+            "#.#.#",
+            "#.#.#",
+            "#A.E#",
+            "#####",
+        ]
+        self.building = make_building(lines)
+        self.validator = MoveValidator(self.building)
 
-    def test_invalid_move_not_orthogonal(self):
-        self.assertFalse(self.validator.is_valid_move((0, 0), (1, 1)))
-
-    def test_invalid_move_blocked_by_wall(self):
-        self.building.add_wall_between((0, 0), (0, 1))
-        self.assertFalse(self.validator.is_valid_move((0, 0), (0, 1)))
-        # Wall blocks from the other side too.
-        self.assertFalse(self.validator.is_valid_move((0, 1), (0, 0)))
-
-    def test_wall_only_blocks_its_own_edge(self):
-        self.building.add_wall_between((0, 0), (0, 1))
-        # Moving south from (0,0) should still be fine.
-        self.assertTrue(self.validator.is_valid_move((0, 0), (1, 0)))
-
-    def test_matches_example_building_from_cli(self):
-        # Same walls as build_example_building() in move_validator.py
-        self.building.add_wall_between((0, 0), (0, 1))
-        self.building.add_wall_between((1, 1), (2, 1))
-
-        self.assertFalse(self.validator.is_valid_move((0, 0), (0, 1)))
-        self.assertTrue(self.validator.is_valid_move((0, 0), (1, 0)))
-        self.assertFalse(self.validator.is_valid_move((1, 1), (2, 1)))
+    def test_move_between_two_floor_tiles_is_valid(self):
         self.assertTrue(self.validator.is_valid_move((1, 1), (1, 2)))
+
+    def test_move_onto_wall_tile_is_invalid(self):
+        self.assertFalse(self.validator.is_valid_move((1, 1), (2, 1)))
+
+    def test_move_onto_exit_tile_is_valid(self):
+        self.assertTrue(self.validator.is_valid_move((2, 3), (3, 3)))
+
+    def test_move_onto_artifact_tile_is_valid(self):
+        self.assertTrue(self.validator.is_valid_move((2, 3), (1, 3)))
+
+    def test_move_out_of_bounds_is_invalid(self):
+        self.assertFalse(self.validator.is_valid_move((0, 1), (-1, 1)))
+
+    def test_move_that_is_not_a_single_step_is_invalid(self):
+        # Two steps away, even though both ends are floor tiles.
+        self.assertFalse(self.validator.is_valid_move((1, 1), (1, 3)))
+
+    def test_wall_blocks_from_both_sides(self):
+        # Symmetric: can't step onto the wall from either neighbor.
+        self.assertFalse(self.validator.is_valid_move((1, 1), (2, 1)))
+        self.assertFalse(self.validator.is_valid_move((3, 1), (2, 1)))
+
+
+class TestMoveValidatorAgainstRealMapFile(unittest.TestCase):
+    """
+    Sanity check using Building.from_lines the same way Building.from_file
+    would build a real map -- catches integration issues that isolated
+    unit tests might miss (e.g. row/column mixups).
+    """
+
+    def setUp(self):
+        lines = [
+            "########",
+            "#..#...#",
+            "#..#.#.#",
+            "#....#.#",
+            "#.##.#.#",
+            "#....#E#",
+            "########",
+        ]
+        self.building = make_building(lines)
+        self.validator = MoveValidator(self.building)
+
+    def test_start_corner_is_walkable(self):
+        self.assertTrue(self.building.is_walkable((1, 1)))
+
+    def test_walking_a_short_path_to_the_right(self):
+        path = [(1, 1), (2, 1)]
+        self.assertTrue(self.validator.is_valid_move(*path))
+
+    def test_cannot_cut_through_interior_wall(self):
+        # (3,1) is '#' in row index 1
+        self.assertFalse(self.validator.is_valid_move((2, 1), (3, 1)))
+
+    def test_exit_is_reachable_as_a_valid_move(self):
+        # Row "#....#E#": E is at x=6, y=5. Its only open neighbor is
+        # (6,4), a floor tile directly above it in row "#.##.#.#".
+        self.assertTrue(self.validator.is_valid_move((6, 4), (6, 5)))
 
 
 if __name__ == "__main__":
