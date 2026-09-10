@@ -1,6 +1,6 @@
 import json
 
-from game.bulding import Building
+from game.building import Building
 from game.player import Player
 from game.guard import Guard
 from game.goal import StealItemGoal
