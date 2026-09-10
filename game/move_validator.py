@@ -1,26 +1,5 @@
 """
 MoveValidator skeleton (adjacency + walls only) + bare CLI.
-
-Part of a larger stealth game whose concepts map to classes:
-Player, Guard, Building, Tile, GameState, Goal, MoveValidator.
-
-This file focuses ONLY on MoveValidator, plus the minimal Tile and Building
-classes it depends on. Player/Guard/GameState/Goal are intentionally left
-out for now -- other parts of the project will define those.
-
-Design notes:
-- Tile: knows which of its 4 sides ('n','s','e','w') have a wall.
-- Building: a width x height grid of Tiles. Cells are addressed as
-  (row, col). add_wall_between() marks a wall on BOTH tiles it touches,
-  so wall data stays consistent regardless of which tile you check from.
-- MoveValidator: takes a Building and checks two things only:
-    1. Adjacency -> is `target` exactly one orthogonal step from `current`,
-       and inside the grid?
-    2. Walls     -> is there a wall blocking that specific edge?
-  Its public method, is_valid_move(current, target), is meant to stay
-  stable even as Tile/Building grow more features later (e.g. locked
-  doors, item pickups) -- other classes like Player should be able to
-  call it without caring about the internals.
 """
 
 from typing import Tuple, Dict
