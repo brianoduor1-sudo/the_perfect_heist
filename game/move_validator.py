@@ -1,4 +1,10 @@
-from typing import Tuple, Dict, Optional
+"""
+MoveValidator skeleton (adjacency + walls only) + bare CLI.
+"""
+
+from typing import Tuple, Dict
+
+Cell = Tuple[int, int]  # (row, col)
 
 from .building import Building
 
