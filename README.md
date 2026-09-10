@@ -81,7 +81,7 @@ cd the_perfect_heist
 python -m venv venv && source venv/bin/activate   
 pip install -r requirements.txt
 ollama pull llama3   
-python main.py
+python3 main.py
 ```
 
 ## Turn Flow
