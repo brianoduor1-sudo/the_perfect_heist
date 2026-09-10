@@ -2,7 +2,7 @@
 MoveValidator skeleton (adjacency + walls only) + bare CLI.
 """
 
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Optional
 
 Cell = Tuple[int, int]  # (row, col)
 
