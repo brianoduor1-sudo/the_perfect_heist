@@ -57,6 +57,10 @@ class Guard:
         self._update_facing(target)
         return self._position
 
+    def take_turn(self, state) -> Tuple[int, int]:
+        """Advance the guard once during a game-state turn."""
+        return self.patrol_step()
+
     @staticmethod
     def _move_one_step_toward(current, target) -> Tuple[int, int]:
         cx, cy = current

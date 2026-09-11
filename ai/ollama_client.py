@@ -83,4 +83,4 @@ class StubAiClient(BaseClient):
         """Return pre-scripted responses looping if needed"""
         response = self.canned_responses[self.call_count % len(self.canned_responses)]
         self.call_count += 1
-        return response
+        return json.dumps(response) if isinstance(response, dict) else response
