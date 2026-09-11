@@ -8,6 +8,9 @@ Player's Current Goal:
 {player_goal}
 
 Determine the next strategic move
-Only respond with "nort", "south", "east", or "west"inside the direction field
-Provide the output in the strict JSON format specified
+You MUST respond with a strict JSON Object in this EXACT format:
+{{"action": "move", "direction": "north"}}
+
+The 'action' must be 'move', 'pick_up'or 'wait'.
+The 'direction' must be 'north','south','east', or 'west' (only if action is 'move')
 """

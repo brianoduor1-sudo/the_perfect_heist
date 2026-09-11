@@ -1,11 +1,14 @@
 import json
 import logging
 from typing import Dict, Any
-
-from goal_parser import parse_and_validate_ai_response
-from prompts import SYSTEM_PROMPT, STRATEGIST_TEMPLATE
+from .goal_parser import parse_and_validate_ai_response
+from .prompts import SYSTEM_PROMPT, STRATEGIST_TEMPLATE
 
 logger = logging.getLogger(__name__)
+
+FULL_WORD_TO_LETTER = {
+    "north": "n", "south": "s", "east": "e", "west": "w"
+}
 
 
 class Strategist:
@@ -19,6 +22,13 @@ class Strategist:
         """Task 2 : Design game_state_to_prompt_serializer."""
         if hasattr(game_state, "to_dict"):
             return json.dumps(game_state.to_dict(), indent=2)
+        
+        elif hasattr(game_state,"player") and hasattr(game_state,"guards"):
+            return json.dumps({
+                "player_pos": list(game_state.player.position),
+                "guard_positions": [list(g.position) for g in game_state.guards],
+                "goal": game_state.goal.description
+            }, indent=2)
         return json.dumps(game_state, indent=2)
 
     def take_turn(self, game_state: Any, player_goal: str) -> Dict[str, Any]:
@@ -32,17 +42,26 @@ class Strategist:
 
         try:
             raw_response = self.ai_client.generate(prompt=prompt, system=SYSTEM_PROMPT)
-            validated_response = parse_and_validate_ai_response(raw_response)
+            validated = parse_and_validate_ai_response(raw_response)
 
-            if validated_response:
-                move_success = game_state.attempt_player_move(validated_response.move)
+            if validated:
+                full_direction = getattr(validated, 'direction', None)
+                action = getattr(validated, 'action', None)
+                letter_move = None
 
-                if move_success:
-                    game_state.strikes = 0
-                    return {"mode": "ai", "data": validated_response.model_dump()}
+                if action == 'move' and full_direction in FULL_WORD_TO_LETTER:
+                    letter_move = FULL_WORD_TO_LETTER[full_direction]
+                    move_success = game_state.attempt_player_move(letter_move)
+
+                    if move_success:
+                        game_state.strikes = 0
+                        return {"mode": "ai", "data": {"status": "success", "narrative": "Ai moved", "move": letter_move}}
+
+                    game_state.strikes += 1
+                    logger.warning(f"Python rejected AI move {full_direction}. Strike {game_state.strikes} / {self.max_strikes}")
                 else:
                     game_state.strikes += 1
-                    logger.warning(f"Python rejected AI move {validated_response.move}. Strike {game_state.strikes} / {self.max_strikes}")
+                    logger.warning(f"Ai gave non-move action or invalid direction. Strike {game_state.strikes}/{self.max_strikes}")
             else:
                 game_state.strikes += 1
                 logger.warning(f"AI response validation failed. Strike {game_state.strikes} / {self.max_strikes}")
@@ -53,9 +72,9 @@ class Strategist:
         if game_state.strikes >= self.max_strikes:
             logger.error("Max strikes reached. Falling back to manual mode.")
             game_state.mode = "manual"
-            return self._manual_fallback_mode(game_state, player_goal)
+            return self._manual_fallback_mode()
 
-        return {"mode": game_state.mode, "data": None}
+        return {"mode":"ai", "data":{"status": "pending", "narrative": "Waiting for the next move"}}
 
     def _manual_fallback_mode(self) -> Dict[str, Any]:
         return {
@@ -65,7 +84,7 @@ class Strategist:
                 "narrative": "The Ai Game master is temporarily offline",
                 "move": "",
                 "status_updates": {},
-                "next_options": ["Continue", "Retry Ai"]
+                "next_options": ["Continue"]
             }
          
         }        

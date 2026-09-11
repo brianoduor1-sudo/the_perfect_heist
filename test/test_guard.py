@@ -1,10 +1,4 @@
-"""
-tests/test_guard.py — Epic 2 Story 4: Guard movement/detection tests
 
-Concepts: @pytest.fixture (shared setup), @pytest.mark.parametrize
-(one test, many cases), plain assert.
-Run: pytest tests/test_guard.py -v
-"""
 
 import pytest
 from game.guard import Guard, Direction
@@ -61,11 +55,11 @@ def test_empty_patrol_path_raises():
 
 # -- detection: radius + edge cases --
 @pytest.mark.parametrize("player_position, expected", [
-    ((5, 5), True),    # same tile
-    ((6, 6), True),    # distance 1
-    ((8, 5), True),    # distance 3 == vision_range (edge)
-    ((9, 5), False),   # distance 4, just outside range (edge)
-    ((20, 20), False), # far away
+    ((5, 5), True),   
+    ((6, 6), True),    
+    ((8, 5), True),   
+    ((9, 5), False),   
+    ((20, 20), False), 
 ])
 def test_detects_player_radius_cases(stationary_guard, player_position, expected):
     assert stationary_guard.detects_player(player_position) is expected

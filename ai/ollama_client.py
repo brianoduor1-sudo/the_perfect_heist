@@ -76,12 +76,11 @@ class StubAiClient(BaseClient):
        Ths allows us to test the game logic [3-strike rule]perfectly
     """
     def __init__(self, canned_responses:Optional[list[str]]=None):
-        self.canned_responses = canned_responses or [{"action": "move", "direction": "north"}
-        ]
+        self.canned_responses = canned_responses or [{"status": "success", "narrative": "Stub move", "move": "e", "next_options":()}]
         self.call_count = 0
 
     def generate(self, prompt: str, system:Optional[str]=None, format_json: bool = True)-> str:
         """Return pre-scripted responses looping if needed"""
         response = self.canned_responses[self.call_count % len(self.canned_responses)]
         self.call_count += 1
-        return response
+        return json.dumps(response) if isinstance(response, dict) else response

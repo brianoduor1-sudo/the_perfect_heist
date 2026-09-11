@@ -1,37 +1,3 @@
-"""
-cli/interface.py
-
-CLI loop for the stealth game. Each turn:
-  1. Ask the AI strategist for a suggested move.
-  2. Show the MoveValidator's verdict on that suggestion (valid, or why not).
-  3. List all currently-valid moves as a manual fallback.
-  4. Let the player type any direction (AI's suggestion or their own) or 'q'.
-
-ASSUMED INTERFACES (adjust call sites once real classes are confirmed):
-    Building(width, height)                     -- game.building
-    Player(position)                            -- game.player
-        .position -> Cell
-        .move_to(cell) -> None
-    Guard(position, patrol_route=None)          -- game.guard
-        .position -> Cell
-        .sees(cell) -> bool
-    Goal(position)                              -- game.goal
-        .is_reached(cell) -> bool
-    GameState(building, player, guards, goal)   -- game.game_state
-        .is_over() -> bool
-        .won() -> bool
-        .tick() -> None
-    MoveValidator(building)                     -- game.move_validator
-        .is_valid_move(current, target) -> bool
-    Strategist(state)                           -- ai.strategist
-        .suggest_move() -> tuple[str, str]      # (direction, reasoning)
-        may raise on failure (e.g. Ollama not running) -- handled below
-
-If Strategist's real signature differs (e.g. takes a goal_parser output,
-or returns just a direction with no reasoning), only get_ai_suggestion()
-below needs to change -- the rest of the loop doesn't care how the
-suggestion was produced.
-"""
 
 from typing import Optional, Tuple
 
