@@ -1,3 +1,5 @@
+
+
 import json
 
 from game.building import Building
@@ -6,8 +8,6 @@ from game.guard import Guard
 from game.goal import StealItemGoal
 from game.tile import TileType
 from persistence.repository import GameRepository
-from ai.ollama_client import AiClient, StubAiClient
-from ai.strategist import Strategist
 
 
 MAP_PATH = "data/map.txt"
@@ -15,15 +15,17 @@ SAVE_PATH = "data/save.json"
 
 
 def find_start_position(building):
+    """Find the first floor tile for the player."""
     for y in range(building.height):
         for x in range(building.width):
             if building.grid[y][x].tile_type == TileType.FLOOR:
                 return (x, y)
 
-    raise ValueError("No floor tile found.")
+    raise ValueError("No walkable floor tiles found in map.")
 
 
 def display_map(building, player, guard):
+    """Display the map with the player and guard."""
     for y, row in enumerate(building.grid):
         line = ""
 
@@ -41,6 +43,7 @@ def display_map(building, player, guard):
 
 
 def save_game(repo, player, guard):
+    """Save the current player and guard state."""
     data = {
         "player": {
             "position": list(player.position),
@@ -55,6 +58,7 @@ def save_game(repo, player, guard):
 
 
 def load_game(repo, player, guard):
+    """Load saved player and guard state."""
     try:
         data = repo.load(SAVE_PATH)
 
@@ -73,72 +77,40 @@ def load_game(repo, player, guard):
 
         print("\nGame loaded.")
 
-    except (FileNotFoundError, json.JSONDecodeError, KeyError, TypeError):
+    except (
+        FileNotFoundError,
+        json.JSONDecodeError,
+        KeyError,
+        TypeError,
+    ):
         print("\nNo valid save found.")
 
 
-def build_strategist():
-    ai_client = AiClient(model="llama3")
-
-    if ai_client.check_connection():
-        return Strategist(ai_client)
-
-    print("\nOllama is not running. Using the offline AI stub.")
-    return Strategist(StubAiClient())
-
-
-def get_ai_move(strategist, player, guard, goal):
-    state = {
-        "player_pos": list(player.position),
-        "guard_pos": list(guard.position),
-        "inventory": list(player.inventory),
-        "goal": goal.describe(),
-    }
-
-    result = strategist.decide_move(state, goal.describe())
-
-    if result["mode"] == "manual":
-        print("\nAI is offline. Switching to manual play.")
-        return None
-
-    if result["status"] != "success":
-        print("\nAI gave an invalid move.")
-        return None
-
-    direction = {
-        "n": "w",
-        "s": "s",
-        "e": "d",
-        "w": "a",
-    }
-
-    move = direction[result["move"]]
-
-    print(f"\nAI chose '{result['move']}'.")
-    return move
-
-
 def main():
+    """Start the game."""
     print("\n=== THE PERFECT HEIST ===")
     print("Steal the artifact and escape!\n")
 
     building = Building.from_file(MAP_PATH)
     repo = GameRepository()
 
-    player = Player(find_start_position(building))
+    start_pos = find_start_position(building)
+    player = Player(start_pos)
+
+    # Guard patrol route
+    guard_path = [
+        (1, 4),
+        (2, 4),
+        (2, 6),
+        (1, 6),
+    ]
 
     guard = Guard(
-        patrol_path=[
-            (1, 4),
-            (2, 4),
-            (2, 6),
-            (1, 6),
-        ],
+        patrol_path=guard_path,
         vision_range=1,
     )
 
     goal = StealItemGoal("artifact")
-    strategist = build_strategist()
 
     moves = {
         "w": (0, -1),
@@ -148,15 +120,16 @@ def main():
     }
 
     while True:
+        print()
         display_map(building, player, guard)
 
-        print(f"\nPlayer: {player.position}")
+        print(f"\nPlayer position: {player.position}")
         print(f"Inventory: {player.inventory}")
         print(f"Goal: {goal.describe()}")
 
         command = input(
-            "\nMove (w/a/s/d), ai, save, load, or q: "
-        ).strip().lower()
+            "\nMove (w/a/s/d), save, load, or 'q' to quit: "
+        ).lower().strip()
 
         if command == "q":
             print("Thanks for playing!")
@@ -170,19 +143,8 @@ def main():
             load_game(repo, player, guard)
             continue
 
-        if command == "ai":
-            command = get_ai_move(
-                strategist,
-                player,
-                guard,
-                goal,
-            )
-
-            if command is None:
-                continue
-
         if command not in moves:
-            print("Invalid command.")
+            print("Invalid move. Use w, a, s, d, save, load, or q.")
             continue
 
         dx, dy = moves[command]
@@ -195,16 +157,18 @@ def main():
 
         player.move_to(new_position)
 
-        tile = building.grid[new_position[1]][new_position[0]]
+        current_tile = building.grid[new_position[1]][new_position[0]]
 
+        # Pick up the artifact
         if (
-            tile.tile_type == TileType.ARTIFACT
+            current_tile.tile_type == TileType.ARTIFACT
             and not player.has_item("artifact")
         ):
             player.pick_up("artifact")
             print("\nYou found the artifact!")
-            print("Now reach the exit!")
+            print("Now make it to the exit!")
 
+        # Guard takes a turn
         guard.patrol_step()
 
         if guard.detects_player(player.position, building):
@@ -213,9 +177,10 @@ def main():
             print("GAME OVER")
             break
 
+        # Player wins after reaching the exit with the artifact
         if (
             player.has_item("artifact")
-            and tile.tile_type == TileType.EXIT
+            and current_tile.tile_type == TileType.EXIT
         ):
             print("\nYou stole the artifact and escaped!")
             print("HEIST COMPLETE!")
