@@ -74,7 +74,7 @@ class Strategist:
             game_state.mode = "manual"
             return self._manual_fallback_mode()
 
-        return {"mode":"ai", "data":{"status": "pending", "narrative": "Waiting for the next move"}}
+        return {"mode":"ai", "data":{"status": "pending", "narrative": f"Ai tried to move {full_direction} but was blocked"}}
 
     def _manual_fallback_mode(self) -> Dict[str, Any]:
         return {
